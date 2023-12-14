@@ -11,6 +11,7 @@ scripts/pcqm4m/pcqm4m-v2/
 slurm_history/
 datasets/
 dataset/
+activations/
 pretrained/
 results/
 vocprep/benchmark_RELEASE/

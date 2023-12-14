@@ -48,13 +48,12 @@ class ExphormerAttention(nn.Module):
         # Scale scores by sqrt(d)
         score = score / np.sqrt(self.out_dim)
         
-        import code
-        code.interact(local=locals())
-
-        # TODO: extract these attention scores for visualization
-        # Use available edge features to modify the scores for edges
         score = torch.mul(score, batch.E)  # (num real edges) x num_heads x out_dim
         score = torch.exp(score.sum(-1, keepdim=True).clamp(-5, 5))  # (num real edges) x num_heads x 1
+        
+        # We extract these attention scores for visualization
+        # "hacking" the batch that was passed and extracting outside of the model
+        batch.score = score
 
         # Apply attention score to each source node to create edge messages
         msg = batch.V_h[edge_index[0].to(torch.long)] * score  # (num real edges) x num_heads x out_dim
