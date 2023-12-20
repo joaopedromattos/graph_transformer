@@ -115,7 +115,7 @@ if __name__ == '__main__':
     args = parse_args()
     # Load config file
 
-    # Joao's Nodes:
+    # Joao's Notes:
     # This is a hack to make it work with the current GraphGym code.
     # GraphGym code expects a cfg.train.mode attribute to be set.
     # We set it to 'standard' here, and then override it with the

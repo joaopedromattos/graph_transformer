@@ -46,18 +46,19 @@ def train_epoch(logger, loader, model, optimizer, scheduler, batch_accumulation)
     
     time_start = time.time()
     
-    Q_activation, K_activation, V_activation, scores = [], [], [], []
+    Q_activation, K_activation, V_activation, scores, edge_indexes = [], [], [], [], []
     for iter, batch in enumerate(loader):
         
-        # code.interact(local={**locals(), **globals()})
         batch.split = 'train'
         batch.to(torch.device(cfg.device))
-        pred, true = model(batch)
         
+        pred, true = model(batch)
+                
         Q_activation.append(activation['Q'])
         K_activation.append(activation['K'])
         V_activation.append(activation['V'])
-        scores.append(batch.score)
+        scores.append(batch.score.detach())
+        edge_indexes.append(batch.expander_edge_index)
         
         if cfg.dataset.name == 'ogbg-code2':
             loss, pred_score = subtoken_cross_entropy(pred, true)
@@ -91,7 +92,7 @@ def train_epoch(logger, loader, model, optimizer, scheduler, batch_accumulation)
     h1.remove()
     h2.remove()
     h3.remove()
-    return Q_activation, K_activation, V_activation, scores
+    return Q_activation, K_activation, V_activation, scores, edge_indexes
     
 
 
@@ -171,7 +172,7 @@ def custom_train(loggers, loaders, model, optimizer, scheduler):
     perf = [[] for _ in range(num_splits)]
     for cur_epoch in range(start_epoch, cfg.optim.max_epoch):
         start_time = time.perf_counter()
-        Q_activation, K_activation, V_activation, scores = train_epoch(loggers[0], loaders[0], model, optimizer, scheduler,
+        Q_activation, K_activation, V_activation, scores, edge_indexes = train_epoch(loggers[0], loaders[0], model, optimizer, scheduler,
                     cfg.optim.batch_accumulation)
         perf[0].append(loggers[0].write_epoch(cur_epoch))
         if is_eval_epoch(cur_epoch):
@@ -252,10 +253,11 @@ def custom_train(loggers, loaders, model, optimizer, scheduler):
                                      f"gamma={gtl.attention.gamma.item()}")
         
         # Pickle the activations we obtained
-        pickle.dump(Q_activation, open(f"./activations/{cfg.dataset.name}_{cur_epoch}_Q_activation.pkl", "wb"))
-        pickle.dump(K_activation, open(f"./activations/{cfg.dataset.name}_{cur_epoch}_K_activation.pkl", "wb"))
-        pickle.dump(V_activation, open(f"./activations/{cfg.dataset.name}_{cur_epoch}_V_activation.pkl", "wb"))
-        pickle.dump(scores, open(f"./activations/{cfg.dataset.name}_{cur_epoch}_scores_activation.pkl", "wb"))
+        pickle.dump(Q_activation, open(f"/home/jrm28/graph_transformer/Exphormer/activations/{cfg.dataset.name}/{cfg.prep.exp_algorithm}/{cur_epoch}_Q_activation.pkl", "wb"))
+        pickle.dump(K_activation, open(f"/home/jrm28/graph_transformer/Exphormer/activations/{cfg.dataset.name}/{cfg.prep.exp_algorithm}/{cur_epoch}_K_activation.pkl", "wb"))
+        pickle.dump(V_activation, open(f"/home/jrm28/graph_transformer/Exphormer/activations/{cfg.dataset.name}/{cfg.prep.exp_algorithm}/{cur_epoch}_V_activation.pkl", "wb"))
+        pickle.dump(scores, open(f"/home/jrm28/graph_transformer/Exphormer/activations/{cfg.dataset.name}/{cfg.prep.exp_algorithm}/{cur_epoch}_scores_activation.pkl", "wb"))
+        pickle.dump(edge_indexes, open(f"/home/jrm28/graph_transformer/Exphormer/activations/{cfg.dataset.name}/{cfg.prep.exp_algorithm}/{cur_epoch}_edge_indexes_activation.pkl", "wb"))
         
     logging.info(f"Avg time per epoch: {np.mean(full_epoch_times):.2f}s")
     logging.info(f"Total train loop time: {np.sum(full_epoch_times) / 3600:.2f}h")

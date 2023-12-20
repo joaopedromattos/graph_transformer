@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, ShuffleSplit
 from torch_geometric.graphgym.config import cfg
 from torch_geometric.graphgym.loader import index2mask, set_dataset_attr
+from torch_geometric.transforms import RandomNodeSplit
 
 
 def prepare_splits(dataset):
@@ -49,7 +50,10 @@ def setup_standard_split(dataset):
             mask = getattr(dataset.data, split_name, None)
             # Check if the train/val/test split mask is available
             if mask is None:
-                raise ValueError(f"Missing '{split_name}' for standard split")
+                dataset.data = RandomNodeSplit()(dataset.data)
+                
+                mask = getattr(dataset.data, split_name, None)
+                # raise ValueError(f"Missing '{split_name}' for standard split")
 
             # Pick a specific split if multiple splits are available
             if mask.dim() == 2:

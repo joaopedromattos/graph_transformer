@@ -119,39 +119,50 @@ def generate_random_expander(data, degree, algorithm, rng=None, max_num_iters=10
   cur_iter = 1
 
   if num_nodes <= degree:
-    degree = num_nodes - 1    
+    degree = num_nodes - 1   
     
-  # if there are too few nodes, random graph generation will fail. in this case, we will
-  # add the whole graph.
-  if num_nodes <= 10:
+  # Joao's Notes:
+  # This is a hack to make it work with the current GraphGym code.
+  # The idea is just to use this "Full" parameter to obtain a full graph easily
+  if algorithm == 'Full':
     for i in range(num_nodes):
       for j in range(num_nodes):      
         if i != j:
           max_senders.append(i)
           max_receivers.append(j)
   else:
-    while eig_val < eig_val_lower_bound and cur_iter <= max_num_iters:
-      if algorithm == 'Random-d':
-        senders, receivers = generate_random_regular_graph1(num_nodes, degree, rng)
-      elif algorithm == 'Random-d-2':
-        senders, receivers = generate_random_regular_graph2(num_nodes, degree, rng)
-      elif algorithm == 'Hamiltonian':
-        senders, receivers = generate_random_graph_with_hamiltonian_cycles(num_nodes, degree, rng)
-      else:
-        raise ValueError('prep.exp_algorithm should be one of the Random-d or Hamiltonian')
-      [eig_val, _] = laplacian_eigenv(senders, receivers, k=1, n=num_nodes)
-      if len(eig_val) == 0:
-        print("num_nodes = %d, degree = %d, cur_iter = %d, mmax_iters = %d, senders = %d, receivers = %d" %(num_nodes, degree, cur_iter, max_num_iters, len(senders), len(receivers)))
-        eig_val = 0
-      else:
-        eig_val = eig_val[0]
+      
+    # if there are too few nodes, random graph generation will fail. in this case, we will
+    # add the whole graph.
+    if num_nodes <= 10:
+      for i in range(num_nodes):
+        for j in range(num_nodes):      
+          if i != j:
+            max_senders.append(i)
+            max_receivers.append(j)
+    else:
+      while eig_val < eig_val_lower_bound and cur_iter <= max_num_iters:
+        if algorithm == 'Random-d':
+          senders, receivers = generate_random_regular_graph1(num_nodes, degree, rng)
+        elif algorithm == 'Random-d-2':
+          senders, receivers = generate_random_regular_graph2(num_nodes, degree, rng)
+        elif algorithm == 'Hamiltonian':
+          senders, receivers = generate_random_graph_with_hamiltonian_cycles(num_nodes, degree, rng)
+        else:
+          raise ValueError('prep.exp_algorithm should be one of the Random-d or Hamiltonian')
+        [eig_val, _] = laplacian_eigenv(senders, receivers, k=1, n=num_nodes)
+        if len(eig_val) == 0:
+          print("num_nodes = %d, degree = %d, cur_iter = %d, mmax_iters = %d, senders = %d, receivers = %d" %(num_nodes, degree, cur_iter, max_num_iters, len(senders), len(receivers)))
+          eig_val = 0
+        else:
+          eig_val = eig_val[0]
 
-      if eig_val > max_eig_val_so_far:
-        max_eig_val_so_far = eig_val
-        max_senders = senders
-        max_receivers = receivers
+        if eig_val > max_eig_val_so_far:
+          max_eig_val_so_far = eig_val
+          max_senders = senders
+          max_receivers = receivers
 
-      cur_iter += 1
+        cur_iter += 1
 
   # eliminate self loops.
   non_loops = [

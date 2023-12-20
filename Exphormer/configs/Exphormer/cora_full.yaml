@@ -18,6 +18,7 @@ dataset:
   edge_encoder_bn: False
 prep:
   exp: True
+  exp_algorithm: Full
   exp_deg: 3 # Algorithm will use 3 permutations or 3 Hamiltonian cycles, so actual degree will be 6
   add_self_loops: true
   num_virt_node: 0
